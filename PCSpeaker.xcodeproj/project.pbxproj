@@ -1,0 +1,399 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AA1000012D00000100000001 /* PCSpeakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000012D00000100000001 /* PCSpeakerApp.swift */; };
+		AA1000022D00000100000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB1000022D00000100000001 /* Assets.xcassets */; };
+		AA1000032D00000100000001 /* LockFreeRingBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000032D00000100000001 /* LockFreeRingBuffer.swift */; };
+		AA1000042D00000100000001 /* AudioStreamStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000042D00000100000001 /* AudioStreamStats.swift */; };
+		AA1000052D00000100000001 /* AudioStreamPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000052D00000100000001 /* AudioStreamPlayer.swift */; };
+		AA1000062D00000100000001 /* AudioWebSocketClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000062D00000100000001 /* AudioWebSocketClient.swift */; };
+		AA1000072D00000100000001 /* NetworkDiscoveryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000072D00000100000001 /* NetworkDiscoveryManager.swift */; };
+		AA1000082D00000100000001 /* NowPlayingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000082D00000100000001 /* NowPlayingManager.swift */; };
+		AA1000092D00000100000001 /* ConnectionHistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000092D00000100000001 /* ConnectionHistoryManager.swift */; };
+		AA1000102D00000100000001 /* AudioReceiverService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000102D00000100000001 /* AudioReceiverService.swift */; };
+		AA1000112D00000100000001 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000112D00000100000001 /* AppTheme.swift */; };
+		AA1000122D00000100000001 /* VUMeterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000122D00000100000001 /* VUMeterView.swift */; };
+		AA1000132D00000100000001 /* StatsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000132D00000100000001 /* StatsRowView.swift */; };
+		AA1000142D00000100000001 /* StatusHeaderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000142D00000100000001 /* StatusHeaderCard.swift */; };
+		AA1000152D00000100000001 /* DetailsAccordionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000152D00000100000001 /* DetailsAccordionView.swift */; };
+		AA1000162D00000100000001 /* ActionButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000162D00000100000001 /* ActionButtonsView.swift */; };
+		AA1000172D00000100000001 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000172D00000100000001 /* QRScannerView.swift */; };
+		AA1000182D00000100000001 /* ManualIPSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000182D00000100000001 /* ManualIPSheet.swift */; };
+		AA1000192D00000100000001 /* HistorySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000192D00000100000001 /* HistorySheet.swift */; };
+		AA1000202D00000100000001 /* HelpGuideSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000202D00000100000001 /* HelpGuideSheet.swift */; };
+		AA1000212D00000100000001 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000212D00000100000001 /* MainView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		BB1000002D00000100000001 /* PCSpeaker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PCSpeaker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB1000012D00000100000001 /* PCSpeakerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PCSpeakerApp.swift; sourceTree = "<group>"; };
+		BB1000022D00000100000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BB1000032D00000100000001 /* LockFreeRingBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockFreeRingBuffer.swift; sourceTree = "<group>"; };
+		BB1000042D00000100000001 /* AudioStreamStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioStreamStats.swift; sourceTree = "<group>"; };
+		BB1000052D00000100000001 /* AudioStreamPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioStreamPlayer.swift; sourceTree = "<group>"; };
+		BB1000062D00000100000001 /* AudioWebSocketClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioWebSocketClient.swift; sourceTree = "<group>"; };
+		BB1000072D00000100000001 /* NetworkDiscoveryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkDiscoveryManager.swift; sourceTree = "<group>"; };
+		BB1000082D00000100000001 /* NowPlayingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingManager.swift; sourceTree = "<group>"; };
+		BB1000092D00000100000001 /* ConnectionHistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionHistoryManager.swift; sourceTree = "<group>"; };
+		BB1000102D00000100000001 /* AudioReceiverService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioReceiverService.swift; sourceTree = "<group>"; };
+		BB1000112D00000100000001 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		BB1000122D00000100000001 /* VUMeterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VUMeterView.swift; sourceTree = "<group>"; };
+		BB1000132D00000100000001 /* StatsRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsRowView.swift; sourceTree = "<group>"; };
+		BB1000142D00000100000001 /* StatusHeaderCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusHeaderCard.swift; sourceTree = "<group>"; };
+		BB1000152D00000100000001 /* DetailsAccordionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailsAccordionView.swift; sourceTree = "<group>"; };
+		BB1000162D00000100000001 /* ActionButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionButtonsView.swift; sourceTree = "<group>"; };
+		BB1000172D00000100000001 /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
+		BB1000182D00000100000001 /* ManualIPSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualIPSheet.swift; sourceTree = "<group>"; };
+		BB1000192D00000100000001 /* HistorySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistorySheet.swift; sourceTree = "<group>"; };
+		BB1000202D00000100000001 /* HelpGuideSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGuideSheet.swift; sourceTree = "<group>"; };
+		BB1000212D00000100000001 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		BB1000222D00000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CC1000002D00000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DD1000002D00000100000001 = {
+			isa = PBXGroup;
+			children = (
+				DD1000012D00000100000001 /* PCSpeaker */,
+				DD1000022D00000100000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DD1000012D00000100000001 /* PCSpeaker */ = {
+			isa = PBXGroup;
+			children = (
+				DD1000032D00000100000001 /* App */,
+				DD1000042D00000100000001 /* Audio */,
+				DD1000052D00000100000001 /* Network */,
+				DD1000062D00000100000001 /* Services */,
+				DD1000072D00000100000001 /* Views */,
+				DD1000082D00000100000001 /* Theme */,
+				BB1000022D00000100000001 /* Assets.xcassets */,
+			);
+			path = PCSpeaker;
+			sourceTree = "<group>";
+		};
+		DD1000022D00000100000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000002D00000100000001 /* PCSpeaker.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DD1000032D00000100000001 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000012D00000100000001 /* PCSpeakerApp.swift */,
+				BB1000222D00000100000001 /* Info.plist */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		DD1000042D00000100000001 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000032D00000100000001 /* LockFreeRingBuffer.swift */,
+				BB1000042D00000100000001 /* AudioStreamStats.swift */,
+				BB1000052D00000100000001 /* AudioStreamPlayer.swift */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		DD1000052D00000100000001 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000062D00000100000001 /* AudioWebSocketClient.swift */,
+				BB1000072D00000100000001 /* NetworkDiscoveryManager.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		DD1000062D00000100000001 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000082D00000100000001 /* NowPlayingManager.swift */,
+				BB1000092D00000100000001 /* ConnectionHistoryManager.swift */,
+				BB1000102D00000100000001 /* AudioReceiverService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		DD1000072D00000100000001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000212D00000100000001 /* MainView.swift */,
+				DD1000092D00000100000001 /* Components */,
+				DD1000102D00000100000001 /* Sheets */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DD1000082D00000100000001 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000112D00000100000001 /* AppTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		DD1000092D00000100000001 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000122D00000100000001 /* VUMeterView.swift */,
+				BB1000132D00000100000001 /* StatsRowView.swift */,
+				BB1000142D00000100000001 /* StatusHeaderCard.swift */,
+				BB1000152D00000100000001 /* DetailsAccordionView.swift */,
+				BB1000162D00000100000001 /* ActionButtonsView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		DD1000102D00000100000001 /* Sheets */ = {
+			isa = PBXGroup;
+			children = (
+				BB1000172D00000100000001 /* QRScannerView.swift */,
+				BB1000182D00000100000001 /* ManualIPSheet.swift */,
+				BB1000192D00000100000001 /* HistorySheet.swift */,
+				BB1000202D00000100000001 /* HelpGuideSheet.swift */,
+			);
+			path = Sheets;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		EE1000002D00000100000001 /* PCSpeaker */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FF1000012D00000100000001 /* Build configuration list for PBXNativeTarget "PCSpeaker" */;
+			buildPhases = (
+				GG1000002D00000100000001 /* Sources */,
+				CC1000002D00000100000001 /* Frameworks */,
+				HH1000002D00000100000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PCSpeaker;
+			productName = PCSpeaker;
+			productReference = BB1000002D00000100000001 /* PCSpeaker.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		001000002D00000100000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					EE1000002D00000100000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = FF1000002D00000100000001 /* Build configuration list for PBXProject "PCSpeaker" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DD1000002D00000100000001;
+			productRefGroup = DD1000022D00000100000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EE1000002D00000100000001 /* PCSpeaker */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		HH1000002D00000100000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA1000022D00000100000001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		GG1000002D00000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA1000012D00000100000001 /* PCSpeakerApp.swift in Sources */,
+				AA1000032D00000100000001 /* LockFreeRingBuffer.swift in Sources */,
+				AA1000042D00000100000001 /* AudioStreamStats.swift in Sources */,
+				AA1000052D00000100000001 /* AudioStreamPlayer.swift in Sources */,
+				AA1000062D00000100000001 /* AudioWebSocketClient.swift in Sources */,
+				AA1000072D00000100000001 /* NetworkDiscoveryManager.swift in Sources */,
+				AA1000082D00000100000001 /* NowPlayingManager.swift in Sources */,
+				AA1000092D00000100000001 /* ConnectionHistoryManager.swift in Sources */,
+				AA1000102D00000100000001 /* AudioReceiverService.swift in Sources */,
+				AA1000112D00000100000001 /* AppTheme.swift in Sources */,
+				AA1000122D00000100000001 /* VUMeterView.swift in Sources */,
+				AA1000132D00000100000001 /* StatsRowView.swift in Sources */,
+				AA1000142D00000100000001 /* StatusHeaderCard.swift in Sources */,
+				AA1000152D00000100000001 /* DetailsAccordionView.swift in Sources */,
+				AA1000162D00000100000001 /* ActionButtonsView.swift in Sources */,
+				AA1000172D00000100000001 /* QRScannerView.swift in Sources */,
+				AA1000182D00000100000001 /* ManualIPSheet.swift in Sources */,
+				AA1000192D00000100000001 /* HistorySheet.swift in Sources */,
+				AA1000202D00000100000001 /* HelpGuideSheet.swift in Sources */,
+				AA1000212D00000100000001 /* MainView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		JJ1000002D00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		JJ1000012D00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_OPTIMIZATION_LEVEL = s;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		JJ1000022D00000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PCSpeaker/App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "PC Speaker";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pcspeaker.receiver;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		JJ1000032D00000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PCSpeaker/App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "PC Speaker";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pcspeaker.receiver;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FF1000002D00000100000001 /* Build configuration list for PBXProject "PCSpeaker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				JJ1000002D00000100000001 /* Debug */,
+				JJ1000012D00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FF1000012D00000100000001 /* Build configuration list for PBXNativeTarget "PCSpeaker" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				JJ1000022D00000100000001 /* Debug */,
+				JJ1000032D00000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 001000002D00000100000001 /* Project object */;
+}
