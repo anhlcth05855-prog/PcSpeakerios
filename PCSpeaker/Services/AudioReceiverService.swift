@@ -88,21 +88,27 @@ public final class AudioReceiverService: ObservableObject {
         audioPlayer.$currentRmsLevel
             .receive(on: DispatchQueue.main)
             .sink { [weak self] level in
-                self?.stats.currentRmsLevel = level
+                Task { @MainActor [weak self] in
+                    self?.stats.currentRmsLevel = level
+                }
             }
             .store(in: &cancellables)
             
         audioPlayer.$activeOutputRoute
             .receive(on: DispatchQueue.main)
             .sink { [weak self] route in
-                self?.stats.outputRoute = route
+                Task { @MainActor [weak self] in
+                    self?.stats.outputRoute = route
+                }
             }
             .store(in: &cancellables)
             
         audioPlayer.$deviceVolumePercent
             .receive(on: DispatchQueue.main)
             .sink { [weak self] vol in
-                self?.stats.deviceVolumePercent = vol
+                Task { @MainActor [weak self] in
+                    self?.stats.deviceVolumePercent = vol
+                }
             }
             .store(in: &cancellables)
     }
@@ -181,8 +187,9 @@ public final class AudioReceiverService: ObservableObject {
             }
         }
         
-        client.onAudioChunkReceived = { [weak self] data in
-            self?.audioPlayer.writePcmData(data)
+        let player = self.audioPlayer
+        client.onAudioChunkReceived = { [weak player] data in
+            player?.writePcmData(data)
         }
         
         self.webSocketClient = client

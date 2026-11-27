@@ -174,7 +174,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
     }
     
     // MARK: - URLSessionWebSocketDelegate
-    public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
+    public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocolName: String?) {
         print("[AudioWebSocketClient] Connected successfully")
         self.isConnected = true
         DispatchQueue.main.async { [weak self] in

@@ -26,6 +26,7 @@ jobs:
       - name: Build & Package IPA
         run: |
           mkdir -p build
+          set -o pipefail
           xcodebuild clean build \
             -project PCSpeaker.xcodeproj \
             -scheme PCSpeaker \
@@ -35,7 +36,11 @@ jobs:
             CODE_SIGN_STYLE="Manual" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee build/xcodebuild.log || {
+              echo "::error::Build failed, error details:"
+              grep -E -i -C 2 "(error:|fatal error:|\*\* BUILD FAILED \*\*)" build/xcodebuild.log | head -n 50
+              exit 1
+            }
 
           APP_PATH=$(find build/DerivedData -name "PCSpeaker.app" -type d | head -n 1)
           echo "Found app at: $APP_PATH"
@@ -50,6 +55,14 @@ jobs:
           zip -r PCSpeaker.ipa Payload
           echo "IPA File Generated:"
           ls -lh PCSpeaker.ipa
+
+      - name: Upload Build Log On Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-failure-log
+          path: build/xcodebuild.log
+          retention-days: 7
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
