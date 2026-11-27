@@ -39,7 +39,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
         let config = URLSessionConfiguration.default
         config.waitsForConnectivity = false
         config.networkServiceType = .voice // Prioritizes real-time low-latency packet delivery
-        config.timeoutIntervalForRequest = 7.0
+        config.timeoutIntervalForRequest = 3.0 // Fast 3-second timeout for quick fallback
         config.timeoutIntervalForResource = 0 // Keep stream open indefinitely
         
         let operationQueue = OperationQueue()
@@ -50,11 +50,27 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
         webSocketTask = session?.webSocketTask(with: url)
         webSocketTask?.resume()
         
-        // Start 7-second handshake timeout
+        // Start 3-second handshake timeout
         startTimeoutTimer(for: normalized)
         
-        // Listen for the first message or open event
+        // Listen for immediate messages (handshake or audio)
         receiveNext()
+        
+        // Fast probe: send immediate ping to verify TCP connection in < 15ms
+        webSocketTask?.sendPing { [weak self] error in
+            guard let self = self, !self.isIntentionalDisconnect else { return }
+            if error == nil {
+                self.stopTimeoutTimer()
+                if !self.isConnected {
+                    self.isConnected = true
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self, !self.isIntentionalDisconnect else { return }
+                        self.onConnected?()
+                    }
+                }
+            }
+        }
+        
         startPingTimer()
         print("[AudioWebSocketClient] Connecting to \(normalized)...")
     }
@@ -97,13 +113,13 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
     private func startTimeoutTimer(for urlString: String) {
         stopTimeoutTimer()
         DispatchQueue.main.async { [weak self] in
-            self?.timeoutTimer = Timer.scheduledTimer(withTimeInterval: 7.0, repeats: false) { [weak self] _ in
+            self?.timeoutTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
                 guard let self = self, !self.isConnected, !self.isIntentionalDisconnect else { return }
-                print("[AudioWebSocketClient] Connection timed out after 7s to \(urlString)")
+                print("[AudioWebSocketClient] Connection timed out to \(urlString)")
                 let errorCb = self.onError
                 self.disconnect()
                 DispatchQueue.main.async {
-                    errorCb?("Connection timed out. Could not reach \(urlString). Please ensure PC Sender is running, Windows Firewall allows port 8080, and both devices are on the same Wi-Fi.")
+                    errorCb?("Could not reach \(urlString). Please ensure PC Sender is running.")
                 }
             }
         }
@@ -142,7 +158,14 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
                     self.onAudioChunkReceived?(data)
                     
                 case .string(let text):
-                    // In case server sends a text ping or metadata
+                    // Instant greeting received from server on connect
+                    if !self.isConnected {
+                        self.isConnected = true
+                        DispatchQueue.main.async { [weak self] in
+                            guard let self = self, !self.isIntentionalDisconnect else { return }
+                            self.onConnected?()
+                        }
+                    }
                     if text.contains("ping") {
                         self.sendPong()
                     }
@@ -150,7 +173,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
                     break
                 }
                 
-                // Immediately queue the next receive for continuous uninterrupted audio
+                // Immediately queue next receive for continuous uninterrupted audio
                 if !self.isIntentionalDisconnect {
                     self.receiveNext()
                 }

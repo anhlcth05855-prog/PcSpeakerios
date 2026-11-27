@@ -182,6 +182,14 @@ public final class AudioReceiverService: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 self.audioPlayer.stop()
+                
+                // If direct reconnect failed, seamlessly fall back to auto-discovery to find PC's new IP instantly
+                if self.stats.state == .connecting {
+                    print("[AudioReceiverService] Fast direct connect failed, launching network discovery...")
+                    self.startAutoDiscovery()
+                    return
+                }
+                
                 self.stats.state = .error(errMsg)
                 self.stats.errorMessage = errMsg
                 self.stats.isPlaying = false

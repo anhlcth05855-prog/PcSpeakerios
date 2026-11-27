@@ -77,7 +77,7 @@ def udp_discovery_loop(local_ip):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.settimeout(0.5)
+    sock.settimeout(0.2)
 
     try:
         sock.bind(("", DISCOVERY_PORT))
@@ -93,11 +93,21 @@ def udp_discovery_loop(local_ip):
         ("172.20.10.15", DISCOVERY_PORT) # iPhone hotspot subnet
     ]
 
-    last_broadcast_time = 0
+    # Fire 3 quick beacons on startup for instant pairing
+    for _ in range(3):
+        for b_addr in broadcast_targets:
+            try:
+                sock.sendto(beacon_payload, b_addr)
+            except Exception:
+                pass
+        time.sleep(0.05)
+
+    last_broadcast_time = time.time()
     while True:
         now = time.time()
-        # Broadcast beacon every 0.8 seconds for instant recognition
-        if now - last_broadcast_time > 0.8:
+        # Fast beaconing: 0.35s when searching, 1.2s when already streaming
+        interval = 0.35 if not connected_clients else 1.2
+        if now - last_broadcast_time > interval:
             for b_addr in broadcast_targets:
                 try:
                     sock.sendto(beacon_payload, b_addr)
@@ -110,13 +120,13 @@ def udp_discovery_loop(local_ip):
             data, client_addr = sock.recvfrom(1024)
             msg = data.decode("utf-8", errors="ignore").strip()
             if "DISCOVER_PC_SPEAKER" in msg:
-                # Reply immediately directly to discovering phone
+                # Reply immediately directly to discovering phone twice to avoid UDP packet drop
                 sock.sendto(beacon_payload, client_addr)
                 sock.sendto(beacon_payload, client_addr)
         except (socket.timeout, BlockingIOError):
             pass
         except Exception:
-            time.sleep(0.05)
+            time.sleep(0.02)
 
 
 def push_audio_chunk(raw_bytes):
@@ -214,7 +224,22 @@ async def ws_handler(websocket):
     except Exception:
         pass
         
-    print(f"\n[+] iPhone / Receiver Connected: {client_ip} (TCP_NODELAY Active)")
+    print(f"\n[+] iPhone / Receiver Connected: {client_ip} (Instant Handshake Active)")
+    
+    # Immediately send greeting handshake so iOS client confirms connection instantly (< 10ms)
+    # Even if PC is completely silent, the app connects immediately without waiting for sound!
+    try:
+        handshake_payload = json.dumps({
+            "status": "connected",
+            "name": socket.gethostname(),
+            "port": PORT,
+            "sampleRate": SAMPLE_RATE,
+            "channels": CHANNELS
+        })
+        await websocket.send(handshake_payload)
+    except Exception:
+        pass
+
     connected_clients.add(websocket)
     try:
         # Keep connection open until phone disconnects or network drops

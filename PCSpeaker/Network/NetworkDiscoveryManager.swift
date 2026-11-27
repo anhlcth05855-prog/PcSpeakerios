@@ -6,7 +6,7 @@ public final class NetworkDiscoveryManager {
     private let discoveryPort: UInt16 = 8888
     private var socketFd: Int32 = -1
     private var isSearching: Bool = false
-    private var workerQueue = DispatchQueue(label: "com.pcspeaker.discovery", qos: .userInitiated)
+    private var workerQueue = DispatchQueue(label: "com.pcspeaker.discovery", qos: .userInteractive)
     private var probeTimer: DispatchSourceTimer?
     
     public var onDeviceFound: ((DiscoveredPc) -> Void)?
@@ -73,7 +73,10 @@ public final class NetworkDiscoveryManager {
             print("[NetworkDiscovery] Notice: Could not bind port \(discoveryPort), will rely on probe responses")
         }
         
-        // Start periodic probe broadcaster (sending DISCOVER_PC_SPEAKER)
+        // Fire first probe immediately with 0 delay
+        sendProbe()
+        
+        // Start fast periodic probe broadcaster (every 300ms)
         startProbeTimer()
         
         // Receive buffer
@@ -81,8 +84,8 @@ public final class NetworkDiscoveryManager {
         var clientAddr = sockaddr_in()
         var addrLen = socklen_t(MemoryLayout<sockaddr_in>.size)
         
-        // Set socket receive timeout to 1.5 seconds so loop can cleanly check isSearching
-        var timeout = timeval(tv_sec: 1, tv_usec: 500000)
+        // Socket receive timeout 0.5s so loop responds rapidly to stop signals
+        var timeout = timeval(tv_sec: 0, tv_usec: 500000)
         setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
         
         while isSearching && socketFd >= 0 {
@@ -104,7 +107,7 @@ public final class NetworkDiscoveryManager {
     
     private func startProbeTimer() {
         let timer = DispatchSource.makeTimerSource(queue: workerQueue)
-        timer.schedule(deadline: .now(), repeating: .milliseconds(600))
+        timer.schedule(deadline: .now() + .milliseconds(250), repeating: .milliseconds(300))
         timer.setEventHandler { [weak self] in
             self?.sendProbe()
         }
@@ -118,7 +121,14 @@ public final class NetworkDiscoveryManager {
         let probeText = "DISCOVER_PC_SPEAKER"
         guard let data = probeText.data(using: .utf8) else { return }
         
-        let broadcastIps = ["255.255.255.255", "192.168.1.255", "192.168.0.255", "172.20.10.15"]
+        let broadcastIps = [
+            "255.255.255.255",
+            "192.168.1.255",
+            "192.168.0.255",
+            "192.168.43.255",
+            "192.168.100.255",
+            "172.20.10.15"
+        ]
         
         data.withUnsafeBytes { rawBuffer in
             guard let ptr = rawBuffer.baseAddress else { return }
