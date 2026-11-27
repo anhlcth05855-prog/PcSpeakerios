@@ -7,18 +7,20 @@ on:
     branches: [ master, main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build & Package IPA
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Select Xcode
+      - name: Verify Xcode Version
         run: |
-          sudo xcode-select -s /Applications/Xcode_15.4.app || sudo xcode-select -s /Applications/Xcode.app
           xcodebuild -version
 
       - name: Build & Archive PCSpeaker
@@ -40,7 +42,7 @@ jobs:
           cp -r build/PCSpeaker.xcarchive/Products/Applications/PCSpeaker.app build/Payload/
           cd build
           zip -r PCSpeaker.ipa Payload
-          echo "IPA Size:"
+          echo "IPA File Generated:"
           ls -lh PCSpeaker.ipa
 
       - name: Upload IPA Artifact
@@ -50,7 +52,7 @@ jobs:
           path: build/PCSpeaker.ipa
           retention-days: 30
 
-      - name: Create GitHub Release (On Push to Main/Master)
+      - name: Create GitHub Release
         if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
         uses: softprops/action-gh-release@v2
         with:
