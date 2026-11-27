@@ -179,9 +179,8 @@ public final class AudioStreamPlayer: ObservableObject {
     // MARK: - Incoming PCM Data Processing
     /// Writes binary Float32 Little-Endian stereo PCM chunks from WebSocket
     public func writePcmData(_ data: Data) {
-        guard isPlaying || audioEngine != nil else {
+        if !isPlaying {
             start()
-            return
         }
         
         let count = data.count

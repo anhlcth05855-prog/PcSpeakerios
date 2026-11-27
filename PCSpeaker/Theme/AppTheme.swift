@@ -8,10 +8,10 @@ public enum AppTheme {
     public static let primaryLight = Color(red: 0.92, green: 0.96, blue: 1.0)
     
     // Backgrounds & Surfaces (adaptive for Dark and Light mode)
-    public static let background = Color("Background", bundle: nil)
-    public static let surface = Color("Surface", bundle: nil)
-    public static let surfaceVariant = Color("SurfaceVariant", bundle: nil)
-    public static let border = Color("Border", bundle: nil)
+    public static let background = Color(UIColor.systemGroupedBackground)
+    public static let surface = Color(UIColor.secondarySystemGroupedBackground)
+    public static let surfaceVariant = Color(UIColor.tertiarySystemGroupedBackground)
+    public static let border = Color(UIColor.separator)
     
     // Status colors
     public static let statusGreen = Color(red: 0.06, green: 0.73, blue: 0.51)  // #10B981
