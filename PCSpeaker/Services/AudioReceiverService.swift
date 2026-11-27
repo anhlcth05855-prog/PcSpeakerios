@@ -54,8 +54,8 @@ public final class AudioReceiverService: ObservableObject {
                     self.discoveredPcs.append(pc)
                 }
                 
-                // Only auto-connect if user initiated searching and is actively in searching state
-                if self.isSearching && self.stats.state == .searching {
+                // Connect if currently searching
+                if self.isSearching || self.stats.state == .searching {
                     self.discoveryStatusText = "Found: \(pc.name) (\(pc.ip)) • Connecting..."
                     self.stopAutoDiscovery()
                     self.savePcInfo(url: pc.wsUrl, name: pc.name)
@@ -122,7 +122,7 @@ public final class AudioReceiverService: ObservableObject {
         let savedUrl = UserDefaults.standard.string(forKey: prefSavedUrl) ?? ""
         let savedName = UserDefaults.standard.string(forKey: prefSavedName) ?? "PC Sender"
         
-        // If saved URL is stale (old .13 IP), skip straight to auto discovery
+        // If saved URL is not stale, connect to it, otherwise search
         if !savedUrl.isEmpty && !savedUrl.contains(".13:") {
             discoveryStatusText = "Connecting to: \(savedName)..."
             connect(url: savedUrl, pcName: savedName)
@@ -135,6 +135,10 @@ public final class AudioReceiverService: ObservableObject {
     public func connect(url: String, pcName: String = "PC Sender") {
         let normalized = AudioWebSocketClient.normalizeUrl(url)
         stopAutoDiscovery()
+        
+        // Sever any previous client immediately so state is completely clean
+        webSocketClient?.disconnect()
+        webSocketClient = nil
         
         stats.state = .connecting
         stats.serverUrl = normalized
@@ -183,13 +187,7 @@ public final class AudioReceiverService: ObservableObject {
                 guard let self = self else { return }
                 self.audioPlayer.stop()
                 
-                // If direct reconnect failed, seamlessly fall back to auto-discovery to find PC's new IP instantly
-                if self.stats.state == .connecting {
-                    print("[AudioReceiverService] Fast direct connect failed, launching network discovery...")
-                    self.startAutoDiscovery()
-                    return
-                }
-                
+                // Set error state FIRST so we never get trapped in .connecting
                 self.stats.state = .error(errMsg)
                 self.stats.errorMessage = errMsg
                 self.stats.isPlaying = false
@@ -232,7 +230,11 @@ public final class AudioReceiverService: ObservableObject {
     
     // MARK: - Auto-Discovery
     public func startAutoDiscovery() {
-        guard stats.state != .connected && stats.state != .connecting else { return }
+        // Disconnect any hanging attempt so we never get blocked
+        webSocketClient?.disconnect()
+        webSocketClient = nil
+        audioPlayer.stop()
+        
         isSearching = true
         stats.state = .searching
         discoveryStatusText = "Searching for PC on local Wi-Fi..."

@@ -38,8 +38,8 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
         
         let config = URLSessionConfiguration.default
         config.waitsForConnectivity = false
-        config.networkServiceType = .voice // Prioritizes real-time low-latency packet delivery
-        config.timeoutIntervalForRequest = 3.0 // Fast 3-second timeout for quick fallback
+        config.networkServiceType = .voice // Real-time audio queue prioritization
+        config.timeoutIntervalForRequest = 5.0
         config.timeoutIntervalForResource = 0 // Keep stream open indefinitely
         
         let operationQueue = OperationQueue()
@@ -50,28 +50,12 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
         webSocketTask = session?.webSocketTask(with: url)
         webSocketTask?.resume()
         
-        // Start 3-second handshake timeout
+        // Start 5-second handshake timeout
         startTimeoutTimer(for: normalized)
         
-        // Listen for immediate messages (handshake or audio)
+        // Listen for messages (handshake greeting or PCM audio)
         receiveNext()
         
-        // Fast probe: send immediate ping to verify TCP connection in < 15ms
-        webSocketTask?.sendPing { [weak self] error in
-            guard let self = self, !self.isIntentionalDisconnect else { return }
-            if error == nil {
-                self.stopTimeoutTimer()
-                if !self.isConnected {
-                    self.isConnected = true
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self = self, !self.isIntentionalDisconnect else { return }
-                        self.onConnected?()
-                    }
-                }
-            }
-        }
-        
-        startPingTimer()
         print("[AudioWebSocketClient] Connecting to \(normalized)...")
     }
     
@@ -80,7 +64,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
         stopTimeoutTimer()
         stopPingTimer()
         
-        // Sever callback references immediately to prevent any late audio packets
+        // Sever callback references immediately
         onAudioChunkReceived = nil
         
         if isConnected {
@@ -113,7 +97,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
     private func startTimeoutTimer(for urlString: String) {
         stopTimeoutTimer()
         DispatchQueue.main.async { [weak self] in
-            self?.timeoutTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+            self?.timeoutTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
                 guard let self = self, !self.isConnected, !self.isIntentionalDisconnect else { return }
                 print("[AudioWebSocketClient] Connection timed out to \(urlString)")
                 let errorCb = self.onError
@@ -142,6 +126,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
                 self.stopTimeoutTimer()
                 if !self.isConnected {
                     self.isConnected = true
+                    self.startPingTimer()
                     DispatchQueue.main.async { [weak self] in
                         guard let self = self, !self.isIntentionalDisconnect else { return }
                         self.onConnected?()
@@ -159,13 +144,6 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
                     
                 case .string(let text):
                     // Instant greeting received from server on connect
-                    if !self.isConnected {
-                        self.isConnected = true
-                        DispatchQueue.main.async { [weak self] in
-                            guard let self = self, !self.isIntentionalDisconnect else { return }
-                            self.onConnected?()
-                        }
-                    }
                     if text.contains("ping") {
                         self.sendPong()
                     }
@@ -182,6 +160,8 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
                 if !self.isIntentionalDisconnect {
                     print("[AudioWebSocketClient] Receive error: \(error.localizedDescription)")
                     self.isConnected = false
+                    self.stopPingTimer()
+                    self.stopTimeoutTimer()
                     DispatchQueue.main.async { [weak self] in
                         guard let self = self, !self.isIntentionalDisconnect else { return }
                         self.onError?(error.localizedDescription)
@@ -207,7 +187,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
     }
     
     private func sendPing() {
-        guard !isIntentionalDisconnect else { return }
+        guard !isIntentionalDisconnect, isConnected else { return }
         webSocketTask?.sendPing { error in
             if let error = error {
                 print("[AudioWebSocketClient] Ping failed: \(error.localizedDescription)")
@@ -245,9 +225,10 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
     // MARK: - URLSessionWebSocketDelegate & TaskDelegate
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocolName: String?) {
         guard !isIntentionalDisconnect else { return }
-        print("[AudioWebSocketClient] Connected successfully")
+        print("[AudioWebSocketClient] Connected successfully via delegate")
         stopTimeoutTimer()
         self.isConnected = true
+        self.startPingTimer()
         DispatchQueue.main.async { [weak self] in
             guard let self = self, !self.isIntentionalDisconnect else { return }
             self.onConnected?()
@@ -256,6 +237,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
     
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         stopTimeoutTimer()
+        stopPingTimer()
         self.isConnected = false
         if !isIntentionalDisconnect {
             DispatchQueue.main.async { [weak self] in
@@ -266,6 +248,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
     
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         stopTimeoutTimer()
+        stopPingTimer()
         if !isIntentionalDisconnect, let error = error {
             print("[AudioWebSocketClient] Task completed with error: \(error.localizedDescription)")
             self.isConnected = false
