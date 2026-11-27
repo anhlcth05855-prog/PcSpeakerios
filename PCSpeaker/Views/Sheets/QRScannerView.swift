@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import UIKit
 
 /// Camera QR Code Scanner with Viewfinder & Torch Toggle
 public struct QRScannerView: View {

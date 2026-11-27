@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Action Buttons: Auto Connect, Scan QR, Manual IP, History, and Disconnect
 public struct ActionButtonsView: View {
