@@ -128,7 +128,7 @@ public final class AudioStreamPlayer: ObservableObject {
                 }
             }
             
-            isSilence.pointee = (framesRead == 0)
+            isSilence.pointee = ObjCBool(framesRead == 0)
             return noErr
         }
         
