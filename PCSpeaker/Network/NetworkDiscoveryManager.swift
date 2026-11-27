@@ -104,7 +104,7 @@ public final class NetworkDiscoveryManager {
     
     private func startProbeTimer() {
         let timer = DispatchSource.makeTimerSource(queue: workerQueue)
-        timer.schedule(deadline: .now(), repeating: .seconds(2))
+        timer.schedule(deadline: .now(), repeating: .milliseconds(600))
         timer.setEventHandler { [weak self] in
             self?.sendProbe()
         }
@@ -118,17 +118,21 @@ public final class NetworkDiscoveryManager {
         let probeText = "DISCOVER_PC_SPEAKER"
         guard let data = probeText.data(using: .utf8) else { return }
         
-        var broadcastAddr = sockaddr_in()
-        broadcastAddr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-        broadcastAddr.sin_family = sa_family_t(AF_INET)
-        broadcastAddr.sin_port = discoveryPort.bigEndian
-        broadcastAddr.sin_addr.s_addr = inet_addr("255.255.255.255")
+        let broadcastIps = ["255.255.255.255", "192.168.1.255", "192.168.0.255", "172.20.10.15"]
         
         data.withUnsafeBytes { rawBuffer in
             guard let ptr = rawBuffer.baseAddress else { return }
-            withUnsafePointer(to: &broadcastAddr) {
-                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
-                    _ = sendto(socketFd, ptr, data.count, 0, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            for ipStr in broadcastIps {
+                var broadcastAddr = sockaddr_in()
+                broadcastAddr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+                broadcastAddr.sin_family = sa_family_t(AF_INET)
+                broadcastAddr.sin_port = discoveryPort.bigEndian
+                broadcastAddr.sin_addr.s_addr = inet_addr(ipStr)
+                
+                withUnsafePointer(to: &broadcastAddr) {
+                    $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                        _ = sendto(socketFd, ptr, data.count, 0, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+                    }
                 }
             }
         }

@@ -24,27 +24,49 @@ latest_audio_peak = 0.0
 
 
 def get_local_ip():
-    """Find the machine's local LAN IP address."""
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    """Find the machine's primary local LAN IP address, prioritizing 192.168.x.x, 10.x.x.x, 172.x.x.x over virtual VPNs."""
+    hostname = socket.gethostname()
+    candidates = []
     try:
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
+        for item in socket.getaddrinfo(hostname, None):
+            if item[0] == socket.AF_INET:
+                ip = item[4][0]
+                if not ip.startswith("127."):
+                    candidates.append(ip)
     except Exception:
-        ip = "127.0.0.1"
-    finally:
+        pass
+
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        connected_ip = s.getsockname()[0]
         s.close()
-    return ip
+        if connected_ip not in candidates:
+            candidates.append(connected_ip)
+    except Exception:
+        pass
+
+    # Priority score: real home LAN first, then tethering, avoid virtual adapters (like Radmin 26.x)
+    def ip_score(ip):
+        if ip.startswith("192.168."): return 1
+        if ip.startswith("172.20."): return 2   # iPhone USB / Bluetooth PAN
+        if ip.startswith("10."): return 3
+        if ip.startswith("172."): return 4
+        return 10  # Virtual VPNs like 26.x.x.x
+
+    candidates.sort(key=ip_score)
+    return candidates[0] if candidates else "127.0.0.1"
 
 
 def udp_discovery_loop(local_ip):
     """
-    Broadcasts UDP beacon on port 8888 so iOS/Android apps can auto-discover this PC
-    without needing to scan any QR code or type any IP address.
+    Broadcasts UDP beacon on port 8888 across all LAN targets so iOS apps auto-discover this PC instantly.
     """
     hostname = socket.gethostname()
+    friendly_name = f"ASUS TUF ({hostname})"
     beacon_payload = json.dumps({
         "service": "pc-speaker",
-        "name": hostname,
+        "name": friendly_name,
         "ip": local_ip,
         "port": PORT,
         "ws_url": f"ws://{local_ip}:{PORT}"
@@ -53,37 +75,46 @@ def udp_discovery_loop(local_ip):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.settimeout(1.0)
+    sock.settimeout(0.5)
 
     try:
         sock.bind(("", DISCOVERY_PORT))
     except Exception as e:
         print(f"[Auto-Discovery] Warning: Could not bind discovery port {DISCOVERY_PORT}: {e}")
 
-    broadcast_addr = ("255.255.255.255", DISCOVERY_PORT)
+    # Calculate subnet broadcast address (e.g. 192.168.1.255)
+    parts = local_ip.split(".")
+    subnet_broadcast = f"{parts[0]}.{parts[1]}.{parts[2]}.255" if len(parts) == 4 else "255.255.255.255"
+    broadcast_targets = [
+        ("255.255.255.255", DISCOVERY_PORT),
+        (subnet_broadcast, DISCOVERY_PORT),
+        ("172.20.10.15", DISCOVERY_PORT) # iPhone hotspot subnet
+    ]
 
     last_broadcast_time = 0
     while True:
         now = time.time()
-        # Broadcast beacon every 1.5 seconds
-        if now - last_broadcast_time > 1.5:
-            try:
-                sock.sendto(beacon_payload, broadcast_addr)
-                last_broadcast_time = now
-            except Exception:
-                pass
+        # Broadcast beacon every 0.8 seconds for instant recognition
+        if now - last_broadcast_time > 0.8:
+            for b_addr in broadcast_targets:
+                try:
+                    sock.sendto(beacon_payload, b_addr)
+                except Exception:
+                    pass
+            last_broadcast_time = now
 
         # Listen for probe requests from phone
         try:
             data, client_addr = sock.recvfrom(1024)
             msg = data.decode("utf-8", errors="ignore").strip()
             if "DISCOVER_PC_SPEAKER" in msg:
-                # Reply directly to the discovering phone
+                # Reply immediately directly to discovering phone
+                sock.sendto(beacon_payload, client_addr)
                 sock.sendto(beacon_payload, client_addr)
         except (socket.timeout, BlockingIOError):
             pass
         except Exception:
-            time.sleep(0.1)
+            time.sleep(0.05)
 
 
 def push_audio_chunk(raw_bytes):

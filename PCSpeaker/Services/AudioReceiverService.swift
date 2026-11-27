@@ -115,9 +115,10 @@ public final class AudioReceiverService: ObservableObject {
     
     private func autoConnectOnLaunch() {
         let savedUrl = UserDefaults.standard.string(forKey: prefSavedUrl) ?? ""
-        let savedName = UserDefaults.standard.string(forKey: prefSavedName) ?? "PC Sender"
+        let savedName = UserDefaults.standard.string(forKey: prefSavedName) ?? "ASUS TUF Gaming"
         
-        if !savedUrl.isEmpty {
+        // If saved URL is stale (old .13 IP), skip straight to auto discovery
+        if !savedUrl.isEmpty && !savedUrl.contains(".13:") {
             discoveryStatusText = "Reconnecting to: \(savedName)..."
             connect(url: savedUrl, pcName: savedName)
         } else {

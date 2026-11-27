@@ -23,6 +23,11 @@ public struct BluetoothSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var btManager = BluetoothManager.shared
     
+    // Default or last known laptop IP
+    private var defaultLaptopUrl: String {
+        UserDefaults.standard.string(forKey: "saved_ws_url") ?? "ws://192.168.1.24:8080"
+    }
+    
     public init() {}
     
     public var body: some View {
@@ -46,9 +51,52 @@ public struct BluetoothSheet: View {
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.primary)
                             
-                            Text("Low-latency direct connection without local Wi-Fi")
+                            Text("Direct ultra-low latency connection without Wi-Fi")
                                 .font(.system(size: 13))
                                 .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding()
+                    .glassCard(cornerRadius: 16)
+                    
+                    // Direct Connect to PC Card
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(AppTheme.primaryLight)
+                                    .frame(width: 40, height: 40)
+                                
+                                Image(systemName: "desktopcomputer")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(AppTheme.primary)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Connect to ASUS TUF Laptop")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(.primary)
+                                
+                                Text("ws://192.168.1.24:8080 (or Bluetooth / USB)")
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Button {
+                                dismiss()
+                                AudioReceiverService.shared.connect(url: defaultLaptopUrl, pcName: "ASUS TUF Gaming")
+                            } label: {
+                                Text("Connect")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(AppTheme.primary)
+                                    .cornerRadius(8)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                     .padding()
@@ -80,7 +128,7 @@ public struct BluetoothSheet: View {
                     VStack(alignment: .leading, spacing: 14) {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Nearby Bluetooth Devices")
+                                Text("Nearby Bluetooth Peripherals")
                                     .font(.system(size: 15, weight: .bold))
                                     .foregroundColor(.primary)
                                 
@@ -114,6 +162,10 @@ public struct BluetoothSheet: View {
                             }
                         }
                         
+                        Text("Note: Windows PCs act as Bluetooth Central hosts and pair in iOS Settings → Bluetooth. Use the connection modes below to link audio with your laptop.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        
                         if btManager.discoveredDevices.isEmpty {
                             HStack {
                                 Spacer()
@@ -121,7 +173,7 @@ public struct BluetoothSheet: View {
                                     Image(systemName: "wave.3.right")
                                         .font(.system(size: 28))
                                         .foregroundColor(.secondary.opacity(0.5))
-                                    Text(btManager.isScanning ? "Scanning for devices..." : "Tap 'Scan' to discover nearby PCs")
+                                    Text(btManager.isScanning ? "Scanning for peripherals..." : "Tap 'Scan' to discover nearby Bluetooth devices")
                                         .font(.system(size: 13))
                                         .foregroundColor(.secondary)
                                 }
@@ -132,7 +184,7 @@ public struct BluetoothSheet: View {
                             VStack(spacing: 8) {
                                 ForEach(btManager.discoveredDevices) { device in
                                     HStack {
-                                        Image(systemName: "desktopcomputer")
+                                        Image(systemName: "wave.3.right.circle.fill")
                                             .font(.system(size: 16))
                                             .foregroundColor(AppTheme.primary)
                                             .frame(width: 32, height: 32)
@@ -153,7 +205,7 @@ public struct BluetoothSheet: View {
                                         Button {
                                             btManager.connect(to: device)
                                         } label: {
-                                            Text("Connect")
+                                            Text("Pair")
                                                 .font(.system(size: 12, weight: .bold))
                                                 .foregroundColor(.white)
                                                 .padding(.horizontal, 12)
@@ -173,7 +225,7 @@ public struct BluetoothSheet: View {
                     
                     // Direct 0-Wi-Fi Guide
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("Direct Connection Modes (No Wi-Fi Needed)")
+                        Text("How to Connect via Bluetooth / USB Cable")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.primary)
                         
@@ -185,7 +237,7 @@ public struct BluetoothSheet: View {
                                 Text("Option 1: Bluetooth Personal Area Network (PAN)")
                                     .font(.system(size: 13, weight: .bold))
                             }
-                            Text("1. Turn on Personal Hotspot on iPhone (Bluetooth).\n2. On PC: Windows Settings → Bluetooth → Devices and Printers → Right-click iPhone → Connect using → Access Point.\n3. Open PC Speaker and connect directly with ~10ms latency!")
+                            Text("1. On iPhone: Settings → Personal Hotspot → Allow Others to Join (Bluetooth).\n2. On PC: Windows Settings → Bluetooth → Devices & Printers → Right-click iPhone → Connect using → Access Point.\n3. Run pc_sender.py and tap 'Connect Now' above for ~10ms latency!")
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                         }
@@ -201,7 +253,7 @@ public struct BluetoothSheet: View {
                                 Text("Option 2: USB Cable Direct Tethering (< 5ms)")
                                     .font(.system(size: 13, weight: .bold))
                             }
-                            Text("1. Connect iPhone to PC via USB cable.\n2. Turn on Personal Hotspot (USB Only).\n3. PC will receive an instant 172.20.10.x IP address.\n4. Run pc_sender.py and connect for ultra-low zero-lag sound.")
+                            Text("1. Connect iPhone to PC via USB cable.\n2. Turn on Personal Hotspot (USB Only).\n3. Run pc_sender.py and tap 'Connect Now' above for ultra-fast, zero-lag sound.")
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                         }
