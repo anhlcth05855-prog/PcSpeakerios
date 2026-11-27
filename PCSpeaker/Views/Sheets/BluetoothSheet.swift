@@ -23,9 +23,14 @@ public struct BluetoothSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var btManager = BluetoothManager.shared
     
-    // Default or last known laptop IP
-    private var defaultLaptopUrl: String {
-        UserDefaults.standard.string(forKey: "saved_ws_url") ?? "ws://192.168.1.24:8080"
+    // Dynamic saved PC or last connected address
+    private var lastKnownPcName: String {
+        let name = UserDefaults.standard.string(forKey: "saved_pc_name") ?? ""
+        return name.isEmpty ? "Paired Computer" : name
+    }
+    
+    private var lastKnownUrl: String {
+        UserDefaults.standard.string(forKey: "saved_ws_url") ?? ""
     }
     
     public init() {}
@@ -59,48 +64,50 @@ public struct BluetoothSheet: View {
                     .padding()
                     .glassCard(cornerRadius: 16)
                     
-                    // Direct Connect to PC Card
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(AppTheme.primaryLight)
-                                    .frame(width: 40, height: 40)
+                    // Direct Connect to Saved PC Card
+                    if !lastKnownUrl.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(AppTheme.primaryLight)
+                                        .frame(width: 40, height: 40)
+                                    
+                                    Image(systemName: "desktopcomputer")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(AppTheme.primary)
+                                }
                                 
-                                Image(systemName: "desktopcomputer")
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundColor(AppTheme.primary)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Connect to ASUS TUF Laptop")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.primary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Connect to \(lastKnownPcName)")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.primary)
+                                    
+                                    Text(lastKnownUrl.replacingOccurrences(of: "ws://", with: "").replacingOccurrences(of: "wss://", with: ""))
+                                        .font(.system(size: 12, design: .monospaced))
+                                        .foregroundColor(.secondary)
+                                }
                                 
-                                Text("ws://192.168.1.24:8080 (or Bluetooth / USB)")
-                                    .font(.system(size: 12, design: .monospaced))
-                                    .foregroundColor(.secondary)
+                                Spacer()
+                                
+                                Button {
+                                    dismiss()
+                                    AudioReceiverService.shared.connect(url: lastKnownUrl, pcName: lastKnownPcName)
+                                } label: {
+                                    Text("Connect")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 8)
+                                        .background(AppTheme.primary)
+                                        .cornerRadius(8)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            
-                            Spacer()
-                            
-                            Button {
-                                dismiss()
-                                AudioReceiverService.shared.connect(url: defaultLaptopUrl, pcName: "ASUS TUF Gaming")
-                            } label: {
-                                Text("Connect")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .background(AppTheme.primary)
-                                    .cornerRadius(8)
-                            }
-                            .buttonStyle(.plain)
                         }
+                        .padding()
+                        .glassCard(cornerRadius: 16)
                     }
-                    .padding()
-                    .glassCard(cornerRadius: 16)
                     
                     // Route Picker Card (Bluetooth / AirPlay output)
                     VStack(alignment: .leading, spacing: 12) {

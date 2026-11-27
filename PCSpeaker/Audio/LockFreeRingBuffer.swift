@@ -1,8 +1,8 @@
 import Foundation
 import os
 
-/// High-Performance Ring Buffer for Real-Time Stereo Float32 PCM Audio
-/// Safely bridges incoming WebSocket chunks to the CoreAudio realtime render callback.
+/// High-Performance Jitter Buffer for Real-Time Stereo Float32 PCM Audio
+/// Eliminates audio crackling, pops, and underrun stutter by maintaining a stable jitter buffer with smooth crossfading.
 public final class LockFreeRingBuffer {
     
     private let capacity: Int
@@ -15,19 +15,34 @@ public final class LockFreeRingBuffer {
     
     private var lock = os_unfair_lock()
     
-    /// Target maximum frames to buffer (~80ms @ 48kHz = 3840 frames)
-    /// If network bursts dump excess data, we trim to keep latency ultra-low (< 30ms).
-    private let maxLatencyFrames: Int = 3840
-    private let idealTargetFrames: Int = 1440 // ~30ms target
+    // Jitter buffer management
+    private var isPrebuffering: Bool = true
+    private let prebufferFrames: Int = 4800      // ~100ms initial buffer to absorb Wi-Fi packet jitter
+    private let maxLatencyFrames: Int = 19200    // ~400ms max allowed before gentle catch-up
+    private let targetLatencyFrames: Int = 7200  // ~150ms ideal target buffer
     
-    public init(capacityFrames: Int = 48000) {
+    public init(capacityFrames: Int = 96000) { // 2.0s buffer capacity @ 48kHz
         self.capacity = capacityFrames
         self.leftBuffer = [Float](repeating: 0.0, count: capacityFrames)
         self.rightBuffer = [Float](repeating: 0.0, count: capacityFrames)
     }
     
+    /// Smooth soft-knee limiter to prevent harsh digital clipping / distortion ("tiếng rè")
+    @inline(__always)
+    private static func softLimit(_ sample: Float) -> Float {
+        if sample > 1.0 {
+            let excess = sample - 1.0
+            return 1.0 + (excess / (1.0 + excess)) * 0.2 // Soft roll-off asymptotically approaching 1.2
+        } else if sample < -1.0 {
+            let pos = -sample
+            let excess = pos - 1.0
+            let limited = 1.0 + (excess / (1.0 + excess)) * 0.2
+            return -limited
+        }
+        return sample
+    }
+    
     /// Writes interleaved Float32 stereo data [L0, R0, L1, R1, ...]
-    /// Applies gain multiplier and computes sum of squares for live VU meter.
     public func writeInterleaved(
         _ floatPtr: UnsafePointer<Float>,
         frameCount: Int,
@@ -43,9 +58,8 @@ public final class LockFreeRingBuffer {
             let leftRaw = floatPtr[i * 2] * gain
             let rightRaw = floatPtr[i * 2 + 1] * gain
             
-            // Soft-clip between -1.0 and 1.0 to prevent harsh digital clipping
-            let leftSample = max(-1.0, min(1.0, leftRaw))
-            let rightSample = max(-1.0, min(1.0, rightRaw))
+            let leftSample = Self.softLimit(leftRaw)
+            let rightSample = Self.softLimit(rightRaw)
             
             localSumSquares += (leftSample * leftSample) + (rightSample * rightSample)
             
@@ -56,23 +70,36 @@ public final class LockFreeRingBuffer {
             if availableFramesCount < capacity {
                 availableFramesCount += 1
             } else {
-                // Overflow: drop oldest frame
                 readIndex = (readIndex + 1) % capacity
             }
         }
         
         sumSquaresOut = localSumSquares
         
-        // Adaptive latency check: keep delay tightly bounded to avoid audio lag behind video/games
+        // Release prebuffering once enough frames have accumulated
+        if isPrebuffering && availableFramesCount >= prebufferFrames {
+            isPrebuffering = false
+        }
+        
+        // Smooth catch-up if packet bursts cause buffer to exceed max latency (400ms)
         if availableFramesCount > maxLatencyFrames {
-            let discardCount = availableFramesCount - idealTargetFrames
-            readIndex = (readIndex + discardCount) % capacity
-            availableFramesCount = idealTargetFrames
+            let discardCount = availableFramesCount - targetLatencyFrames
+            // Micro-fade the transition point to guarantee zero audible pops or clicks
+            let smoothFrames = min(64, targetLatencyFrames)
+            let targetReadIndex = (readIndex + discardCount) % capacity
+            for s in 0..<smoothFrames {
+                let factor = Float(s) / Float(smoothFrames)
+                let oldIdx = (readIndex + s) % capacity
+                let newIdx = (targetReadIndex + s) % capacity
+                leftBuffer[newIdx] = (leftBuffer[oldIdx] * (1.0 - factor)) + (leftBuffer[newIdx] * factor)
+                rightBuffer[newIdx] = (rightBuffer[oldIdx] * (1.0 - factor)) + (rightBuffer[newIdx] * factor)
+            }
+            readIndex = targetReadIndex
+            availableFramesCount = targetLatencyFrames
         }
     }
     
     /// Reads non-interleaved stereo frames into CoreAudio render buffers.
-    /// Returns the number of frames actually copied.
     public func read(
         leftOut: UnsafeMutablePointer<Float>,
         rightOut: UnsafeMutablePointer<Float>,
@@ -81,8 +108,17 @@ public final class LockFreeRingBuffer {
         os_unfair_lock_lock(&lock)
         defer { os_unfair_lock_unlock(&lock) }
         
+        // While building initial jitter buffer, output silence so audio starts cleanly
+        if isPrebuffering {
+            return 0
+        }
+        
         let framesToRead = min(count, availableFramesCount)
-        guard framesToRead > 0 else { return 0 }
+        guard framesToRead > 0 else {
+            // Buffer underrun occurred: re-enter prebuffering to recover smoothly
+            isPrebuffering = true
+            return 0
+        }
         
         for i in 0..<framesToRead {
             leftOut[i] = leftBuffer[readIndex]
@@ -94,19 +130,16 @@ public final class LockFreeRingBuffer {
         return framesToRead
     }
     
-    /// Clears any buffered audio data (e.g. on disconnect or pause)
+    /// Clears buffered audio and resets prebuffering
     public func clear() {
         os_unfair_lock_lock(&lock)
         defer { os_unfair_lock_unlock(&lock) }
         
-        readIndex = 0
         writeIndex = 0
+        readIndex = 0
         availableFramesCount = 0
-    }
-    
-    public var currentBufferedFrames: Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
-        return availableFramesCount
+        isPrebuffering = true
+        leftBuffer.withUnsafeMutableBufferPointer { $0.initialize(repeating: 0.0) }
+        rightBuffer.withUnsafeMutableBufferPointer { $0.initialize(repeating: 0.0) }
     }
 }

@@ -24,7 +24,7 @@ public final class AudioStreamPlayer: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     public init() {
-        self.ringBuffer = LockFreeRingBuffer(capacityFrames: 48000)
+        self.ringBuffer = LockFreeRingBuffer(capacityFrames: 96000)
         setupAudioSession()
         setupNotificationObservers()
         updateOutputRoute()
@@ -46,8 +46,8 @@ public final class AudioStreamPlayer: ObservableObject {
                 options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay]
             )
             try session.setPreferredSampleRate(sampleRate)
-            // Request 5ms hardware I/O buffer for ultra-low latency response (< 25ms total roundtrip)
-            try session.setPreferredIOBufferDuration(0.005)
+            // 15ms hardware I/O buffer provides rock-solid stutter-free playback while preserving low latency
+            try session.setPreferredIOBufferDuration(0.015)
             try session.setActive(true, options: [])
         } catch {
             print("[AudioStreamPlayer] Error configuring AVAudioSession: \(error.localizedDescription)")

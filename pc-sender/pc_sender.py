@@ -19,7 +19,7 @@ CHUNK_FRAMES = 960  # 20ms chunk @ 48kHz
 connected_clients = set()
 total_frames_sent = 0
 total_bytes_sent = 0
-audio_queue = asyncio.Queue(maxsize=30)
+audio_queue = asyncio.Queue(maxsize=60)
 latest_audio_peak = 0.0
 
 
@@ -63,7 +63,7 @@ def udp_discovery_loop(local_ip):
     Broadcasts UDP beacon on port 8888 across all LAN targets so iOS apps auto-discover this PC instantly.
     """
     hostname = socket.gethostname()
-    friendly_name = f"ASUS TUF ({hostname})"
+    friendly_name = f"{hostname} (PC Speaker)"
     beacon_payload = json.dumps({
         "service": "pc-speaker",
         "name": friendly_name,
