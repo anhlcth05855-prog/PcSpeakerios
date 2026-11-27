@@ -82,7 +82,7 @@ public struct QRScannerView: View {
                     
                     Spacer()
                     
-                    Text("Quét mã QR")
+                    Text("Scan QR Code")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                     
@@ -106,12 +106,12 @@ public struct QRScannerView: View {
                 
                 // Helper Prompt
                 VStack(spacing: 6) {
-                    Text("Hướng camera vào mã QR hiển thị trên màn hình PC")
+                    Text("Point your camera at the QR code on your PC screen")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                     
-                    Text("(Chạy file pc_sender.py trên máy tính)")
+                    Text("(Run pc_sender.py on your computer)")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.7))
                 }

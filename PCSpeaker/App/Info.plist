@@ -23,9 +23,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>PC Speaker cần quyền truy cập Camera để quét mã QR kết nối hiển thị trên màn hình máy tính.</string>
+	<string>PC Speaker needs camera access to scan the connection QR code displayed on your PC screen.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>PC Speaker cần quyền Mạng cục bộ (Local Network) để tự động phát hiện máy tính và truyền âm thanh không dây độ trễ thấp.</string>
+	<string>PC Speaker needs Local Network access to discover your computer and stream real-time low-latency audio.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>PC Speaker uses Bluetooth to discover and connect with your PC or route audio to Bluetooth accessories.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>PC Speaker uses Bluetooth to discover and connect with your PC.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_pc-speaker._udp</string>

@@ -6,6 +6,7 @@ public struct MainView: View {
     
     @State private var showQRScanner: Bool = false
     @State private var showManualIP: Bool = false
+    @State private var showBluetooth: Bool = false
     @State private var showHistory: Bool = false
     @State private var showHelp: Bool = false
     
@@ -58,11 +59,12 @@ public struct MainView: View {
                         // Status & Diagnostics Dashboard Card
                         StatusHeaderCard(service: service)
                         
-                        // Action Buttons: Auto Connect, QR Scan, Manual IP, History, Disconnect
+                        // Action Buttons: Auto Connect, QR Scan, Manual IP, Bluetooth, History, Disconnect
                         ActionButtonsView(
                             service: service,
                             showQRScanner: $showQRScanner,
                             showManualIP: $showManualIP,
+                            showBluetooth: $showBluetooth,
                             showHistory: $showHistory
                         )
                         
@@ -87,6 +89,9 @@ public struct MainView: View {
             ManualIPSheet { ip, pcName in
                 service.connect(url: ip, pcName: pcName)
             }
+        }
+        .sheet(isPresented: $showBluetooth) {
+            BluetoothSheet()
         }
         .sheet(isPresented: $showHistory) {
             HistorySheet { wsUrl, pcName in

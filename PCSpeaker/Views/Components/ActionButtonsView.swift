@@ -1,23 +1,26 @@
 import SwiftUI
 import UIKit
 
-/// Action Buttons: Auto Connect, Scan QR, Manual IP, History, and Disconnect
+/// Action Buttons: Auto Connect, Scan QR, Manual IP, Bluetooth/Cable, History, and Cancel/Disconnect
 public struct ActionButtonsView: View {
     @ObservedObject var service: AudioReceiverService
     
     @Binding var showQRScanner: Bool
     @Binding var showManualIP: Bool
+    @Binding var showBluetooth: Bool
     @Binding var showHistory: Bool
     
     public init(
         service: AudioReceiverService,
         showQRScanner: Binding<Bool>,
         showManualIP: Binding<Bool>,
+        showBluetooth: Binding<Bool>,
         showHistory: Binding<Bool>
     ) {
         self.service = service
         self._showQRScanner = showQRScanner
         self._showManualIP = showManualIP
+        self._showBluetooth = showBluetooth
         self._showHistory = showHistory
     }
     
@@ -25,9 +28,69 @@ public struct ActionButtonsView: View {
         service.stats.state == .connected
     }
     
+    private var isConnectingOrSearching: Bool {
+        service.stats.state == .connecting || service.isSearching
+    }
+    
     public var body: some View {
         VStack(spacing: 12) {
-            if !isConnected {
+            if isConnected {
+                // Connected State: Disconnect Button
+                Button {
+                    service.disconnect()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                        Text("Disconnect")
+                            .font(.system(size: 15, weight: .bold))
+                    }
+                    .foregroundColor(AppTheme.statusRed)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(Color(red: 1.0, green: 0.94, blue: 0.94))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppTheme.statusRed.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            } else if isConnectingOrSearching {
+                // Connecting / Searching State: Cancel Button
+                Button {
+                    service.stopAutoDiscovery()
+                    service.disconnect()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "xmark.circle")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Cancel Connection")
+                            .font(.system(size: 15, weight: .bold))
+                    }
+                    .foregroundColor(AppTheme.statusRed)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(Color(red: 1.0, green: 0.94, blue: 0.94))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppTheme.statusRed.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                
+                // Discovery Indicator & Status Text
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    
+                    Text(service.discoveryStatusText.isEmpty ? "Connecting to PC..." : service.discoveryStatusText)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 2)
+            } else {
                 // Primary Action Button: Auto Connect
                 Button {
                     let impact = UIImpactFeedbackGenerator(style: .medium)
@@ -49,22 +112,10 @@ public struct ActionButtonsView: View {
                     .shadow(color: AppTheme.primary.opacity(0.35), radius: 8, x: 0, y: 4)
                 }
                 .buttonStyle(.plain)
-                
-                // Discovery Indicator & Status Text
-                if service.isSearching || !service.discoveryStatusText.isEmpty {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        
-                        Text(service.discoveryStatusText.isEmpty ? "Searching for PC on local Wi-Fi..." : service.discoveryStatusText)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 2)
-                    .transition(.opacity)
-                }
-                
-                // Secondary 3-Button Action Row: Scan QR | Nhập IP | Lịch sử
+            }
+            
+            // 4 Grid Action Buttons: Scan QR | Manual IP | Bluetooth & Cable | History
+            VStack(spacing: 8) {
                 HStack(spacing: 8) {
                     // Button 1: Scan QR
                     Button {
@@ -78,7 +129,7 @@ public struct ActionButtonsView: View {
                         }
                         .foregroundColor(AppTheme.primary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 46)
+                        .frame(height: 44)
                         .background(Color.white)
                         .cornerRadius(12)
                         .overlay(
@@ -95,12 +146,36 @@ public struct ActionButtonsView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "network")
                                 .font(.system(size: 13, weight: .semibold))
-                            Text("Nhập IP")
+                            Text("Manual IP")
                                 .font(.system(size: 13, weight: .semibold))
                         }
                         .foregroundColor(AppTheme.primary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 46)
+                        .frame(height: 44)
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(red: 0.88, green: 0.90, blue: 0.93), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                HStack(spacing: 8) {
+                    // Button 3: Bluetooth & Cable
+                    Button {
+                        showBluetooth = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "wave.3.right.circle.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text("Bluetooth / Cable")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        .foregroundColor(AppTheme.primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
                         .background(Color.white)
                         .cornerRadius(12)
                         .overlay(
@@ -110,19 +185,19 @@ public struct ActionButtonsView: View {
                     }
                     .buttonStyle(.plain)
                     
-                    // Button 3: History
+                    // Button 4: History
                     Button {
                         showHistory = true
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "clock.arrow.circlepath")
                                 .font(.system(size: 13, weight: .semibold))
-                            Text("Lịch sử")
+                            Text("History")
                                 .font(.system(size: 13, weight: .semibold))
                         }
                         .foregroundColor(AppTheme.primary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 46)
+                        .frame(height: 44)
                         .background(Color.white)
                         .cornerRadius(12)
                         .overlay(
@@ -132,28 +207,6 @@ public struct ActionButtonsView: View {
                     }
                     .buttonStyle(.plain)
                 }
-            } else {
-                // Connected State: Prominent Disconnect Action
-                Button {
-                    service.disconnect()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 15, weight: .semibold))
-                        Text("Disconnect")
-                            .font(.system(size: 15, weight: .bold))
-                    }
-                    .foregroundColor(AppTheme.statusRed)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color(red: 1.0, green: 0.94, blue: 0.94))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppTheme.statusRed.opacity(0.3), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
             }
         }
     }

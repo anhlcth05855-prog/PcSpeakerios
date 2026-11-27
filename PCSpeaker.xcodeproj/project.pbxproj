@@ -28,6 +28,8 @@
 		AA1000192D00000100000001 /* HistorySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000192D00000100000001 /* HistorySheet.swift */; };
 		AA1000202D00000100000001 /* HelpGuideSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000202D00000100000001 /* HelpGuideSheet.swift */; };
 		AA1000212D00000100000001 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000212D00000100000001 /* MainView.swift */; };
+		AA1000232D00000100000001 /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000232D00000100000001 /* BluetoothManager.swift */; };
+		AA1000242D00000100000001 /* BluetoothSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000242D00000100000001 /* BluetoothSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,6 +56,8 @@
 		BB1000202D00000100000001 /* HelpGuideSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGuideSheet.swift; sourceTree = "<group>"; };
 		BB1000212D00000100000001 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		BB1000222D00000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BB1000232D00000100000001 /* BluetoothManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothManager.swift; sourceTree = "<group>"; };
+		BB1000242D00000100000001 /* BluetoothSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -121,6 +125,7 @@
 			children = (
 				BB1000062D00000100000001 /* AudioWebSocketClient.swift */,
 				BB1000072D00000100000001 /* NetworkDiscoveryManager.swift */,
+				BB1000232D00000100000001 /* BluetoothManager.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -172,6 +177,7 @@
 				BB1000182D00000100000001 /* ManualIPSheet.swift */,
 				BB1000192D00000100000001 /* HistorySheet.swift */,
 				BB1000202D00000100000001 /* HelpGuideSheet.swift */,
+				BB1000242D00000100000001 /* BluetoothSheet.swift */,
 			);
 			path = Sheets;
 			sourceTree = "<group>";
@@ -265,6 +271,8 @@
 				AA1000192D00000100000001 /* HistorySheet.swift in Sources */,
 				AA1000202D00000100000001 /* HelpGuideSheet.swift in Sources */,
 				AA1000212D00000100000001 /* MainView.swift in Sources */,
+				AA1000232D00000100000001 /* BluetoothManager.swift in Sources */,
+				AA1000242D00000100000001 /* BluetoothSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

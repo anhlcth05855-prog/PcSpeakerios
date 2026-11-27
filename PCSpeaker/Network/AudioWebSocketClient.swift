@@ -1,11 +1,12 @@
 import Foundation
 
 /// Low-Latency Native WebSocket Client for PC Speaker Audio Stream
-public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
+public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDelegate {
     
     private var session: URLSession?
     private var webSocketTask: URLSessionWebSocketTask?
     private var pingTimer: Timer?
+    private var timeoutTimer: Timer?
     
     private(set) var isConnected: Bool = false
     private var isIntentionalDisconnect: Bool = false
@@ -36,8 +37,8 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
         }
         
         let config = URLSessionConfiguration.default
-        config.waitsForConnectivity = true
-        config.timeoutIntervalForRequest = 10
+        config.waitsForConnectivity = false
+        config.timeoutIntervalForRequest = 7.0
         config.timeoutIntervalForResource = 0 // Keep stream open indefinitely
         
         let operationQueue = OperationQueue()
@@ -48,6 +49,9 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
         webSocketTask = session?.webSocketTask(with: url)
         webSocketTask?.resume()
         
+        // Start 7-second handshake timeout
+        startTimeoutTimer(for: normalized)
+        
         // Listen for the first message or open event
         receiveNext()
         startPingTimer()
@@ -56,6 +60,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
     
     public func disconnect() {
         isIntentionalDisconnect = true
+        stopTimeoutTimer()
         stopPingTimer()
         
         if isConnected {
@@ -76,6 +81,26 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
         }
     }
     
+    // MARK: - Connection Timeout
+    private func startTimeoutTimer(for urlString: String) {
+        stopTimeoutTimer()
+        DispatchQueue.main.async { [weak self] in
+            self?.timeoutTimer = Timer.scheduledTimer(withTimeInterval: 7.0, repeats: false) { [weak self] _ in
+                guard let self = self, !self.isConnected, !self.isIntentionalDisconnect else { return }
+                print("[AudioWebSocketClient] Connection timed out after 7s to \(urlString)")
+                self.disconnect()
+                DispatchQueue.main.async {
+                    self.onError?("Connection timed out. Could not reach \(urlString). Please ensure PC Sender is running, Windows Firewall allows port 8080, and both devices are on the same Wi-Fi.")
+                }
+            }
+        }
+    }
+    
+    private func stopTimeoutTimer() {
+        timeoutTimer?.invalidate()
+        timeoutTimer = nil
+    }
+    
     // MARK: - Recursive Receive Loop
     private func receiveNext() {
         guard let task = webSocketTask else { return }
@@ -85,6 +110,7 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
             
             switch result {
             case .success(let message):
+                self.stopTimeoutTimer()
                 if !self.isConnected {
                     self.isConnected = true
                     DispatchQueue.main.async {
@@ -173,9 +199,10 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
         return str
     }
     
-    // MARK: - URLSessionWebSocketDelegate
+    // MARK: - URLSessionWebSocketDelegate & TaskDelegate
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocolName: String?) {
         print("[AudioWebSocketClient] Connected successfully")
+        stopTimeoutTimer()
         self.isConnected = true
         DispatchQueue.main.async { [weak self] in
             self?.onConnected?()
@@ -184,10 +211,22 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate {
     
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         print("[AudioWebSocketClient] Closed with code: \(closeCode.rawValue)")
+        stopTimeoutTimer()
         self.isConnected = false
         if !isIntentionalDisconnect {
             DispatchQueue.main.async { [weak self] in
                 self?.onDisconnected?()
+            }
+        }
+    }
+    
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        stopTimeoutTimer()
+        if !isIntentionalDisconnect, let error = error {
+            print("[AudioWebSocketClient] Task completed with error: \(error.localizedDescription)")
+            self.isConnected = false
+            DispatchQueue.main.async { [weak self] in
+                self?.onError?("Connection failed: \(error.localizedDescription). Please verify PC Sender is running.")
             }
         }
     }

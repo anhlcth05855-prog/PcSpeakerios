@@ -73,9 +73,9 @@ public struct StatusHeaderCard: View {
         switch stats.state {
         case .connected:
             if stats.deviceVolumePercent == 0 {
-                return "⚠️ Âm lượng iPhone đang là 0%! Hãy bấm phím tăng âm lượng."
+                return "⚠️ iPhone volume is at 0%! Press the volume up button."
             } else if stats.totalFrames > 150 && stats.currentRmsLevel < 0.001 {
-                return "⚠️ Đang kết nối nhưng máy tính chưa phát âm thanh (hoặc PC đang Mute)."
+                return "⚠️ Connected, but PC is not playing audio (or is muted)."
             } else {
                 return "Receiving 48kHz audio and playing it on this iPhone."
             }

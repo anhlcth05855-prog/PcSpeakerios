@@ -17,9 +17,9 @@ public struct HelpGuideSheet: View {
                             .foregroundColor(AppTheme.primary)
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Hướng Dẫn Sử Dụng")
+                            Text("User Guide")
                                 .font(.system(size: 20, weight: .bold))
-                            Text("Biến iPhone thành loa máy tính trong 3 bước")
+                            Text("Turn your iPhone into a PC speaker in 3 steps")
                                 .font(.system(size: 13))
                                 .foregroundColor(.secondary)
                         }
@@ -30,44 +30,49 @@ public struct HelpGuideSheet: View {
                     // Step 1
                     guideStep(
                         step: "1",
-                        title: "Khởi động PC Sender trên máy tính",
-                        desc: "Mở thư mục pc-sender trên máy tính (Windows/Mac) và chạy lệnh:",
+                        title: "Start PC Sender on Computer",
+                        desc: "Open the pc-sender folder on your PC and run:",
                         code: "python pc_sender.py"
                     )
                     
                     // Step 2
                     guideStep(
                         step: "2",
-                        title: "Chung mạng Wi-Fi",
-                        desc: "Đảm bảo cả iPhone và máy tính của bạn đều đang kết nối vào cùng một mạng Wi-Fi (khuyến nghị băng tần 5GHz để độ trễ thấp nhất < 20ms)."
+                        title: "Same Wi-Fi Network",
+                        desc: "Make sure both your iPhone and PC are connected to the same Wi-Fi network (5GHz recommended for lowest latency < 20ms)."
                     )
                     
                     // Step 3
                     guideStep(
                         step: "3",
-                        title: "Bấm 'Auto Connect' hoặc Quét QR",
-                        desc: "Ứng dụng sẽ tự động dò tìm máy tính trên Wi-Fi qua giao thức UDP Beacon. Hoặc bạn có thể bấm 'Scan QR' để quét mã QR hiển thị trên màn hình PC."
+                        title: "Tap 'Auto Connect' or Scan QR",
+                        desc: "The app will discover your PC automatically via UDP beacon. Or tap 'Scan QR' to scan the QR code displayed in the PC terminal."
                     )
                     
                     // Tips & FAQ Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Mẹo & Khắc Phục Lỗi (Troubleshooting)")
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Tips & Troubleshooting")
                             .font(.system(size: 16, weight: .bold))
                             .padding(.top, 8)
                         
                         faqItem(
-                            question: "iPhone đã kết nối nhưng không nghe thấy tiếng?",
-                            answer: "Kiểm tra thanh âm lượng media của iPhone (gạt nút gạt chuông nếu cần) và kiểm tra mixer âm thanh trên PC xem có đang bị Mute không."
+                            question: "Connected but no sound coming out?",
+                            answer: "Check your iPhone media volume (ensure silent switch is not muting audio) and check Windows Sound Mixer to ensure PC audio is not muted."
                         )
                         
                         faqItem(
-                            question: "Máy tính không tìm thấy / Báo lỗi kết nối?",
-                            answer: "Kiểm tra tường lửa Windows Defender Firewall: hãy cấp quyền 'Allow on Private Networks' cho Python."
+                            question: "Cannot connect / Connection timed out?",
+                            answer: "Ensure Windows Defender Firewall allows Python on Private Networks (or run run_sender.bat as Administrator to automatically open ports 8080 & 8888)."
                         )
                         
                         faqItem(
-                            question: "Ứng dụng có chạy khi khóa màn hình không?",
-                            answer: "Có! Ứng dụng tích hợp AVAudioSession background mode, âm thanh vẫn phát mượt mà khi bạn tắt màn hình hoặc chuyển qua ứng dụng khác."
+                            question: "Does it work in the background?",
+                            answer: "Yes! The app supports iOS audio background mode. Audio continues streaming smoothly even when the screen is locked or you switch apps."
+                        )
+                        
+                        faqItem(
+                            question: "No Wi-Fi available?",
+                            answer: "Tap 'Bluetooth / Cable' on the home screen: connect via USB Cable Tethering (< 5ms latency) or Bluetooth Personal Area Network (PAN)."
                         )
                     }
                     .padding()
@@ -75,11 +80,11 @@ public struct HelpGuideSheet: View {
                 }
                 .padding(20)
             }
-            .navigationTitle("Trợ Giúp")
+            .navigationTitle("Help & Guide")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Xong") {
+                    Button("Done") {
                         dismiss()
                     }
                 }
@@ -109,11 +114,12 @@ public struct HelpGuideSheet: View {
                 Text(desc)
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 
                 if let code = code {
                     Text(code)
-                        .font(.system(size: 13, weight: .medium, design: .monospaced))
-                        .foregroundColor(AppTheme.primaryDark)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(AppTheme.primary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .background(AppTheme.primaryLight)
@@ -125,13 +131,14 @@ public struct HelpGuideSheet: View {
     
     private func faqItem(question: String, answer: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("• " + question)
-                .font(.system(size: 13, weight: .semibold))
+            Text("Q: \(question)")
+                .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.primary)
+            
             Text(answer)
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
-                .padding(.leading, 12)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

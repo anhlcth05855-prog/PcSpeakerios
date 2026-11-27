@@ -21,11 +21,11 @@ public struct HistorySheet: View {
                             .font(.system(size: 48))
                             .foregroundColor(.secondary.opacity(0.6))
                         
-                        Text("Chưa Có Lịch Sử Kết Nối")
+                        Text("No Connection History")
                             .font(.system(size: 17, weight: .bold))
                             .foregroundColor(.primary)
                         
-                        Text("Các máy tính bạn đã kết nối sẽ tự động lưu lại tại đây để kết nối nhanh trong những lần sau.")
+                        Text("Computers you have connected to will be saved here for quick one-tap reconnection.")
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -69,7 +69,7 @@ public struct HistorySheet: View {
                                     dismiss()
                                     onSelect(item.wsUrl, item.pcName)
                                 } label: {
-                                    Text("Kết nối")
+                                    Text("Connect")
                                         .font(.system(size: 13, weight: .bold))
                                         .foregroundColor(.white)
                                         .padding(.horizontal, 14)
@@ -86,32 +86,32 @@ public struct HistorySheet: View {
                     .listStyle(.insetGrouped)
                 }
             }
-            .navigationTitle("Lịch Sử Kết Nối")
+            .navigationTitle("Connection History")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Đóng") {
+                    Button("Close") {
                         dismiss()
                     }
                 }
                 
                 if !history.isEmpty {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Xóa tất cả") {
+                        Button("Clear All") {
                             showClearConfirm = true
                         }
                         .foregroundColor(AppTheme.statusRed)
                     }
                 }
             }
-            .alert("Xóa toàn bộ lịch sử?", isPresented: $showClearConfirm) {
-                Button("Xóa tất cả", role: .destructive) {
+            .alert("Clear Connection History?", isPresented: $showClearConfirm) {
+                Button("Clear All", role: .destructive) {
                     ConnectionHistoryManager.clearAll()
                     history.removeAll()
                 }
-                Button("Hủy", role: .cancel) {}
+                Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Hành động này sẽ xóa toàn bộ danh sách máy tính đã lưu.")
+                Text("This will remove all saved computers from your connection history.")
             }
             .onAppear {
                 self.history = ConnectionHistoryManager.loadAll()

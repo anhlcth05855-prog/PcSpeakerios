@@ -54,7 +54,7 @@ public final class AudioReceiverService: ObservableObject {
                     self.discoveredPcs.append(pc)
                 }
                 
-                self.discoveryStatusText = "✅ Đã tìm thấy: \(pc.name) (\(pc.ip)) • Đang kết nối..."
+                self.discoveryStatusText = "Found: \(pc.name) (\(pc.ip)) • Connecting..."
                 
                 // If not already connected, connect to the discovered PC automatically
                 if self.stats.state != .connected && self.stats.state != .connecting {
@@ -118,7 +118,7 @@ public final class AudioReceiverService: ObservableObject {
         let savedName = UserDefaults.standard.string(forKey: prefSavedName) ?? "PC Sender"
         
         if !savedUrl.isEmpty {
-            discoveryStatusText = "Tự động kết nối lại máy tính: \(savedName)..."
+            discoveryStatusText = "Reconnecting to: \(savedName)..."
             connect(url: savedUrl, pcName: savedName)
         } else {
             startAutoDiscovery()
@@ -215,7 +215,7 @@ public final class AudioReceiverService: ObservableObject {
         guard stats.state != .connected && stats.state != .connecting else { return }
         isSearching = true
         stats.state = .searching
-        discoveryStatusText = "Đang tìm máy tính trong cùng mạng Wi-Fi..."
+        discoveryStatusText = "Searching for PC on local Wi-Fi..."
         discoveredPcs.removeAll()
         discoveryManager.startDiscovery()
     }

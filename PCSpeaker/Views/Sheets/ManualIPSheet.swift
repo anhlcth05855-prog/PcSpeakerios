@@ -32,11 +32,11 @@ public struct ManualIPSheet: View {
                 .padding(.top, 16)
                 
                 VStack(spacing: 6) {
-                    Text("Nhập Địa Chỉ IP Máy Tính")
+                    Text("Enter Computer IP Address")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.primary)
                     
-                    Text("Nhập địa chỉ IPv4 hiển thị trên cửa sổ lệnh pc_sender.py của máy tính.")
+                    Text("Enter the IPv4 address shown in the pc_sender.py terminal window.")
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -47,7 +47,7 @@ public struct ManualIPSheet: View {
                 VStack(spacing: 16) {
                     // IP Address Field
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Địa chỉ IP & Cổng")
+                        Text("IP Address & Port")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.secondary)
                         
@@ -55,7 +55,7 @@ public struct ManualIPSheet: View {
                             Image(systemName: "desktopcomputer")
                                 .foregroundColor(.secondary)
                             
-                            TextField("Ví dụ: 192.168.1.15:8080", text: $ipText)
+                            TextField("e.g. 192.168.1.15:8080", text: $ipText)
                                 .font(.system(size: 16, weight: .medium, design: .monospaced))
                                 .keyboardType(.numbersAndPunctuation)
                                 .autocapitalization(.none)
@@ -80,7 +80,7 @@ public struct ManualIPSheet: View {
                     
                     // PC Name Field
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Tên gợi nhớ máy tính")
+                        Text("Computer Name / Label")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.secondary)
                         
@@ -88,7 +88,7 @@ public struct ManualIPSheet: View {
                             Image(systemName: "tag.fill")
                                 .foregroundColor(.secondary)
                             
-                            TextField("Ví dụ: Laptop Gaming, PC Bàn", text: $pcName)
+                            TextField("e.g. Gaming Laptop, Desktop PC", text: $pcName)
                                 .font(.system(size: 15))
                         }
                         .padding(12)
@@ -109,7 +109,7 @@ public struct ManualIPSheet: View {
                     dismiss()
                     onConnect(trimmed, pcName.trimmingCharacters(in: .whitespacesAndNewlines))
                 } label: {
-                    Text("Kết nối ngay")
+                    Text("Connect Now")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -124,7 +124,7 @@ public struct ManualIPSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Đóng") {
+                    Button("Close") {
                         dismiss()
                     }
                 }
