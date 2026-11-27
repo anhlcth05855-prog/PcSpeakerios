@@ -64,9 +64,6 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
         stopTimeoutTimer()
         stopPingTimer()
         
-        // Sever callback references immediately
-        onAudioChunkReceived = nil
-        
         if isConnected {
             webSocketTask?.cancel(with: .normalClosure, reason: "User disconnected".data(using: .utf8))
         } else {
@@ -79,17 +76,9 @@ public final class AudioWebSocketClient: NSObject, URLSessionWebSocketDelegate, 
         
         if isConnected {
             isConnected = false
-            let disconnectCb = onDisconnected
-            onDisconnected = nil
-            onError = nil
-            onConnected = nil
-            DispatchQueue.main.async {
-                disconnectCb?()
+            DispatchQueue.main.async { [weak self] in
+                self?.onDisconnected?()
             }
-        } else {
-            onDisconnected = nil
-            onError = nil
-            onConnected = nil
         }
     }
     

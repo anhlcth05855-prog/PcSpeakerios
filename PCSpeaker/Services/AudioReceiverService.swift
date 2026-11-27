@@ -213,6 +213,10 @@ public final class AudioReceiverService: ObservableObject {
     public func disconnect() {
         stopAutoDiscovery()
         
+        webSocketClient?.onAudioChunkReceived = nil
+        webSocketClient?.onConnected = nil
+        webSocketClient?.onError = nil
+        webSocketClient?.onDisconnected = nil
         webSocketClient?.disconnect()
         webSocketClient = nil
         
