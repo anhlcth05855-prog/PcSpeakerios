@@ -19,8 +19,10 @@ CHUNK_FRAMES = 960  # 20ms chunk @ 48kHz
 connected_clients = set()
 total_frames_sent = 0
 total_bytes_sent = 0
-audio_queue = asyncio.Queue(maxsize=60)
+audio_queue = asyncio.Queue(maxsize=120)
 latest_audio_peak = 0.0
+active_speaker_id = None
+device_switch_requested = threading.Event()
 
 
 def get_local_ip():
@@ -130,33 +132,35 @@ def push_audio_chunk(raw_bytes):
         pass
 
 
+def device_monitor_loop():
+    """Monitors default audio output changes in a dedicated thread so WASAPI capture never blocks."""
+    global active_speaker_id
+    while True:
+        time.sleep(4.0)
+        try:
+            curr_spk = sc.default_speaker()
+            if active_speaker_id is not None and str(curr_spk.id) != active_speaker_id:
+                print(f"\n[WASAPI Audio Engine] Default output switched to: {curr_spk.name}")
+                device_switch_requested.set()
+        except Exception:
+            pass
+
+
 def capture_audio_loop(loop):
-    """Captures system audio via Windows WASAPI Loopback at 48kHz Float32 stereo, dynamically tracking default device."""
-    global total_frames_sent, total_bytes_sent, latest_audio_peak
+    """Captures system audio via Windows WASAPI Loopback at 48kHz Float32 stereo without blocking."""
+    global total_frames_sent, total_bytes_sent, latest_audio_peak, active_speaker_id
 
     while True:
+        device_switch_requested.clear()
         try:
             speaker = sc.default_speaker()
-            speaker_id = str(speaker.id)
+            active_speaker_id = str(speaker.id)
             print(f"\n[WASAPI Audio Engine] Default Speaker: {speaker.name}")
-            mic = sc.get_microphone(id=speaker_id, include_loopback=True)
+            mic = sc.get_microphone(id=active_speaker_id, include_loopback=True)
             print(f"[WASAPI Audio Engine] Capturing from: {mic.name} (48,000 Hz Stereo)")
 
             with mic.recorder(samplerate=SAMPLE_RATE, channels=CHANNELS, blocksize=CHUNK_FRAMES) as recorder:
-                check_counter = 0
-                while True:
-                    # Every ~2 seconds, verify default speaker hasn't changed
-                    check_counter += 1
-                    if check_counter >= 100:
-                        check_counter = 0
-                        try:
-                            curr_spk = sc.default_speaker()
-                            if str(curr_spk.id) != speaker_id:
-                                print(f"\n[WASAPI Audio Engine] Default speaker switched to: {curr_spk.name}. Reconnecting...")
-                                break
-                        except Exception:
-                            pass
-
+                while not device_switch_requested.is_set():
                     data = recorder.record(numframes=CHUNK_FRAMES)
                     if data is None or len(data) == 0:
                         continue
@@ -189,21 +193,28 @@ async def broadcast_worker():
         total_bytes_sent += byte_count
         total_frames_sent += byte_count // 8
 
-        dead_clients = set()
-        for ws in list(connected_clients):
-            try:
-                await ws.send(raw_bytes)
-            except Exception:
-                dead_clients.add(ws)
-
-        for dc in dead_clients:
-            connected_clients.discard(dc)
+        clients = list(connected_clients)
+        if clients:
+            tasks = [ws.send(raw_bytes) for ws in clients]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for ws, res in zip(clients, results):
+                if isinstance(res, Exception):
+                    connected_clients.discard(ws)
 
 
 async def ws_handler(websocket):
-    """Handles new incoming client WebSocket connections."""
+    """Handles new incoming client WebSocket connections with TCP_NODELAY enabled."""
     client_ip = websocket.remote_address[0] if websocket.remote_address else "Unknown"
-    print(f"\n[+] iPhone / Receiver Connected: {client_ip}")
+    
+    # Disable Nagle's algorithm to eliminate packet buffering latency & micro-stutter
+    try:
+        sock = websocket.transport.get_extra_info('socket')
+        if sock:
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    except Exception:
+        pass
+        
+    print(f"\n[+] iPhone / Receiver Connected: {client_ip} (TCP_NODELAY Active)")
     connected_clients.add(websocket)
     try:
         # Keep connection open until phone disconnects or network drops
@@ -249,14 +260,18 @@ async def main():
     discovery_thread = threading.Thread(target=udp_discovery_loop, args=(local_ip,), daemon=True)
     discovery_thread.start()
 
-    # 2. Start WASAPI Audio Capture in background thread
+    # 2. Start Audio Device Change Monitor thread
+    monitor_thread = threading.Thread(target=device_monitor_loop, daemon=True)
+    monitor_thread.start()
+
+    # 3. Start WASAPI Audio Capture in background thread
     audio_thread = threading.Thread(target=capture_audio_loop, args=(loop,), daemon=True)
     audio_thread.start()
 
-    # 3. Start WebSocket broadcast worker
+    # 4. Start WebSocket broadcast worker
     asyncio.create_task(broadcast_worker())
 
-    # 4. Start WebSocket Server with compression disabled and high throughput limits
+    # 5. Start WebSocket Server with compression disabled and high throughput limits
     async with websockets.serve(
         ws_handler,
         "0.0.0.0",

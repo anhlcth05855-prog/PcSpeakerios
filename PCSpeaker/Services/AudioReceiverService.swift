@@ -54,10 +54,10 @@ public final class AudioReceiverService: ObservableObject {
                     self.discoveredPcs.append(pc)
                 }
                 
-                self.discoveryStatusText = "Found: \(pc.name) (\(pc.ip)) • Connecting..."
-                
-                // If not already connected, connect to the discovered PC automatically
-                if self.stats.state != .connected && self.stats.state != .connecting {
+                // Only auto-connect if user initiated searching and is actively in searching state
+                if self.isSearching && self.stats.state == .searching {
+                    self.discoveryStatusText = "Found: \(pc.name) (\(pc.ip)) • Connecting..."
+                    self.stopAutoDiscovery()
                     self.savePcInfo(url: pc.wsUrl, name: pc.name)
                     self.connect(url: pc.wsUrl, pcName: pc.name)
                 }
@@ -89,7 +89,12 @@ public final class AudioReceiverService: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] level in
                 Task { @MainActor [weak self] in
-                    self?.stats.currentRmsLevel = level
+                    guard let self = self else { return }
+                    if self.stats.state == .connected && self.audioPlayer.isPlaying {
+                        self.stats.currentRmsLevel = level
+                    } else {
+                        self.stats.currentRmsLevel = 0.0
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -119,7 +124,7 @@ public final class AudioReceiverService: ObservableObject {
         
         // If saved URL is stale (old .13 IP), skip straight to auto discovery
         if !savedUrl.isEmpty && !savedUrl.contains(".13:") {
-            discoveryStatusText = "Reconnecting to: \(savedName)..."
+            discoveryStatusText = "Connecting to: \(savedName)..."
             connect(url: savedUrl, pcName: savedName)
         } else {
             startAutoDiscovery()
@@ -188,9 +193,11 @@ public final class AudioReceiverService: ObservableObject {
             }
         }
         
-        let player = self.audioPlayer
-        client.onAudioChunkReceived = { [weak player] data in
-            player?.writePcmData(data)
+        client.onAudioChunkReceived = { [weak self] data in
+            Task { @MainActor [weak self] in
+                guard let self = self, self.stats.state == .connected else { return }
+                self.audioPlayer.writePcmData(data)
+            }
         }
         
         self.webSocketClient = client
@@ -198,13 +205,17 @@ public final class AudioReceiverService: ObservableObject {
     }
     
     public func disconnect() {
+        stopAutoDiscovery()
+        
         webSocketClient?.disconnect()
         webSocketClient = nil
+        
         audioPlayer.stop()
         
         stats.state = .idle
         stats.isPlaying = false
         stats.currentRmsLevel = 0.0
+        discoveryStatusText = ""
         nowPlayingManager.clearNowPlaying()
         
         let feedback = UIImpactFeedbackGenerator(style: .medium)
@@ -224,6 +235,10 @@ public final class AudioReceiverService: ObservableObject {
     public func stopAutoDiscovery() {
         isSearching = false
         discoveryManager.stopDiscovery()
+        if stats.state == .searching {
+            stats.state = .idle
+            discoveryStatusText = ""
+        }
     }
     
     // MARK: - Playback Gain Control

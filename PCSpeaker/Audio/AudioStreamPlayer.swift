@@ -56,7 +56,7 @@ public final class AudioStreamPlayer: ObservableObject {
     
     // MARK: - Notifications (Route Changes & Interruptions)
     private func setupNotificationObservers() {
-        // Route changes (e.g. AirPods connected, unplugged headphones, bluetooth car)
+        // Route changes (AirPods connected, unplugged headphones, bluetooth car)
         NotificationCenter.default.addObserver(
             forName: AVAudioSession.routeChangeNotification,
             object: nil,
@@ -104,31 +104,60 @@ public final class AudioStreamPlayer: ObservableObject {
         }
         
         let node = AVAudioSourceNode(format: format) { [weak self] isSilence, timestamp, frameCount, audioBufferList -> OSStatus in
-            guard let self = self else {
+            guard let self = self, self.isPlaying else {
                 isSilence.pointee = true
                 return noErr
             }
             
             let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
-            guard abl.count >= 2,
-                  let leftPtr = abl[0].mData?.assumingMemoryBound(to: Float.self),
-                  let rightPtr = abl[1].mData?.assumingMemoryBound(to: Float.self) else {
-                isSilence.pointee = true
+            let framesNeeded = Int(frameCount)
+            
+            if abl.count >= 2,
+               let leftPtr = abl[0].mData?.assumingMemoryBound(to: Float.self),
+               let rightPtr = abl[1].mData?.assumingMemoryBound(to: Float.self) {
+                // Non-interleaved stereo
+                let framesRead = self.ringBuffer.read(leftOut: leftPtr, rightOut: rightPtr, count: framesNeeded)
+                
+                if framesRead < framesNeeded {
+                    let lastL = framesRead > 0 ? leftPtr[framesRead - 1] : 0.0
+                    let lastR = framesRead > 0 ? rightPtr[framesRead - 1] : 0.0
+                    let decayFrames = min(16, framesNeeded - framesRead)
+                    
+                    // Smooth 16-frame cosine decay to zero to prevent abrupt square-wave click
+                    for i in 0..<decayFrames {
+                        let ramp = Float(decayFrames - i) / Float(decayFrames)
+                        leftPtr[framesRead + i] = lastL * ramp
+                        rightPtr[framesRead + i] = lastR * ramp
+                    }
+                    for i in (framesRead + decayFrames)..<framesNeeded {
+                        leftPtr[i] = 0.0
+                        rightPtr[i] = 0.0
+                    }
+                }
+                
+                isSilence.pointee = ObjCBool(framesRead == 0)
+                return noErr
+            } else if abl.count == 1,
+                      let interleavedPtr = abl[0].mData?.assumingMemoryBound(to: Float.self) {
+                // Interleaved stereo fallback
+                var tempL = [Float](repeating: 0.0, count: framesNeeded)
+                var tempR = [Float](repeating: 0.0, count: framesNeeded)
+                
+                let framesRead = self.ringBuffer.read(leftOut: &tempL, rightOut: &tempR, count: framesNeeded)
+                for i in 0..<framesRead {
+                    interleavedPtr[i * 2] = tempL[i]
+                    interleavedPtr[i * 2 + 1] = tempR[i]
+                }
+                for i in framesRead..<framesNeeded {
+                    interleavedPtr[i * 2] = 0.0
+                    interleavedPtr[i * 2 + 1] = 0.0
+                }
+                
+                isSilence.pointee = ObjCBool(framesRead == 0)
                 return noErr
             }
             
-            let framesNeeded = Int(frameCount)
-            let framesRead = self.ringBuffer.read(leftOut: leftPtr, rightOut: rightPtr, count: framesNeeded)
-            
-            if framesRead < framesNeeded {
-                // Pad underrun frames with silence to prevent pops or digital clicks
-                for i in framesRead..<framesNeeded {
-                    leftPtr[i] = 0.0
-                    rightPtr[i] = 0.0
-                }
-            }
-            
-            isSilence.pointee = ObjCBool(framesRead == 0)
+            isSilence.pointee = true
             return noErr
         }
         
@@ -162,7 +191,7 @@ public final class AudioStreamPlayer: ObservableObject {
     }
     
     public func stop() {
-        guard isPlaying else { return }
+        guard isPlaying || audioEngine != nil else { return }
         
         audioEngine?.stop()
         audioEngine?.reset()
@@ -173,15 +202,17 @@ public final class AudioStreamPlayer: ObservableObject {
         isPlaying = false
         currentRmsLevel = 0.0
         smoothedRms = 0.0
-        print("[AudioStreamPlayer] Playback stopped and buffer cleared")
+        
+        // Deactivate audio session so hardware is completely released
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        print("[AudioStreamPlayer] Playback stopped, buffer cleared, audio session deactivated")
     }
     
     // MARK: - Incoming PCM Data Processing
-    /// Writes binary Float32 Little-Endian stereo PCM chunks from WebSocket
+    /// Writes binary Float32 Little-Endian stereo PCM chunks from WebSocket.
+    /// Strictly ignores chunks if player is not active to prevent ghost restarts.
     public func writePcmData(_ data: Data) {
-        if !isPlaying {
-            start()
-        }
+        guard isPlaying else { return }
         
         let count = data.count
         guard count >= 8 else { return }
@@ -208,13 +239,13 @@ public final class AudioStreamPlayer: ObservableObject {
         if rawRms > smoothedRms {
             smoothedRms = rawRms
         } else {
-            // Smooth decay for aesthetically pleasing VU meter physics
             smoothedRms = (smoothedRms * 0.85) + (rawRms * 0.15)
         }
         
         let level = min(1.0, max(0.0, smoothedRms))
         DispatchQueue.main.async { [weak self] in
-            self?.currentRmsLevel = level
+            guard let self = self, self.isPlaying else { return }
+            self.currentRmsLevel = level
         }
     }
     
