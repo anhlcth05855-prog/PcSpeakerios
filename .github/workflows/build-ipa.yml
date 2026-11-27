@@ -37,8 +37,14 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee build/xcodebuild.log || {
-              echo "::error::Build failed, error details:"
-              grep -E -i -C 2 "(error:|fatal error:|\*\* BUILD FAILED \*\*)" build/xcodebuild.log | head -n 50
+              echo "=== PRINTING XCODEBUILD ERRORS ==="
+              python3 -c "
+              import re
+              with open('build/xcodebuild.log', 'r', errors='ignore') as f:
+                  for line in f:
+                      if re.search(r'\b(error|fatal error):', line, re.IGNORECASE):
+                          print('::error::' + line.strip())
+              "
               exit 1
             }
 
